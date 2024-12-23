@@ -1,0 +1,12 @@
+POST http://localhost:8000/api/orders
+Content-Type: application/json
+Accept : application/json
+
+{
+  "products": [
+    {
+      "product_id": 4,
+      "quantity": 100000
+    }
+  ]
+}
