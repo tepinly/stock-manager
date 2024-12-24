@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Repositories\IIngredientRepository;
 use App\Repositories\IOrderRepository;
+
+use Exception;
 
 class OrderService implements IOrderService
 {
@@ -18,6 +19,10 @@ class OrderService implements IOrderService
 
     public function create(array $data)
     {
+        if (empty($data['products'])) {
+            throw new Exception('Cannot create an order with no products.');
+        }
+
         $this->ingredientService->checkAndUpdate($data['products']);
 
         return $this->orderRepository->create($data['products']);

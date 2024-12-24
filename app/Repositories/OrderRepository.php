@@ -13,5 +13,7 @@ class OrderRepository implements IOrderRepository
         foreach ($data as $record) {
             $order->products()->attach($record['product_id'], ['quantity' => $record['quantity']]);
         }
+
+        return $order;
     }
 }

@@ -4,5 +4,5 @@ namespace App\Repositories;
 
 interface IIngredientProductRepository
 {
-    public function findManyByProductId(array $productId);
+    public function findManyByProductId(int $productId);
 }

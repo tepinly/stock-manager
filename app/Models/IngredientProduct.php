@@ -9,6 +9,8 @@ class IngredientProduct extends Model
     protected $table = 'ingredient_product';
     protected $fillable = ['ingredient_id', 'product_id', 'weight'];
     public $incrementing = false;
+    protected $primaryKey = null;
+    public $timestamps = false;
     
     public function ingredient()
     {

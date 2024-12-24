@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateOrderRequest;
 use App\Services\OrderService;
 
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+
 class OrderController extends Controller
 {
     protected $orderService;
@@ -19,8 +21,12 @@ class OrderController extends Controller
     {
         $data = $request->validated();
 
-        $this->orderService->create($data);
+        try {
+            $this->orderService->create($data);
 
-        return response()->noContent(201);
+            return response()->noContent(201);
+        } catch (\Exception $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
     }
 }
