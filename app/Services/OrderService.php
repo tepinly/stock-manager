@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\IOrderRepository;
 
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class OrderService implements IOrderService
 {
@@ -23,8 +24,12 @@ class OrderService implements IOrderService
             throw new Exception('Cannot create an order with no products.');
         }
 
-        $this->ingredientService->checkAndUpdate($data['products']);
+        return DB::transaction(function () use ($data) {
+            $emailList = $this->ingredientService->checkAndUpdate($data['products']);
+            $order = $this->orderRepository->create($data['products']);
+            $this->ingredientService->sendEmails($emailList);
 
-        return $this->orderRepository->create($data['products']);
+            return $order;
+        });
     }
 }

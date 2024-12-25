@@ -2,14 +2,11 @@
 
 namespace Tests\Unit;
 
-use App\Mail\IngredientBelowThreshold;
 use App\Repositories\IIngredientProductRepository;
 use App\Repositories\IIngredientRepository;
 use App\Services\IngredientService;
-use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 use Mockery;
-
 use Exception;
 
 class IngredientServiceTest extends TestCase
@@ -63,20 +60,18 @@ class IngredientServiceTest extends TestCase
         $this->ingredientService->checkAndUpdate($products);
     }
 
-    public function testUpdateStockAndSendEmail()
+    public function testReturnEmptyEmailList()
     {
-        Mail::fake();
-
         $products = [
-            ['product_id' => 1, 'quantity' => 5]
+            ['product_id' => 1, 'quantity' => 10]
         ];
 
         $ingredients = [
-            (object) ['id' => 1, 'stock' => 50, 'max_stock' => 100, 'below_threshold' => false]
+            (object) ['id' => 1, 'stock' => 200, 'max_stock' => 200, 'below_threshold' => false]
         ];
 
         $productIngredients = [
-            (object) ['product_id' => 1, 'ingredient_id' => 1, 'weight' => 2]
+            (object) ['product_id' => 1, 'ingredient_id' => 1, 'weight' => 1]
         ];
 
         $this->ingredientRepository
@@ -91,29 +86,49 @@ class IngredientServiceTest extends TestCase
 
         $this->ingredientRepository
             ->shouldReceive('updateMany')
-            ->with(Mockery::on(function ($updatedIngredients) use ($ingredients) {
-                return $updatedIngredients[0]->stock === 40;
+            ->with(Mockery::on(function ($updatedIngredients) {
+                return $updatedIngredients[0]->stock === 190; // 100 - (1 * 10)
             }));
 
-        $this->ingredientService->checkAndUpdate($products);
+        $emailList = $this->ingredientService->checkAndUpdate($products);
 
-        Mail::assertSent(IngredientBelowThreshold::class, function ($mail) use ($ingredients) {
-            return $mail->ingredient->id === $ingredients[0]->id;
-        });
+        $this->assertEmpty($emailList);
     }
 
-    public function testSendEmailWhenBelowThreshold()
+    public function testReturnEmailListWithElements()
     {
-        Mail::fake();
+        $products = [
+            ['product_id' => 1, 'quantity' => 2]
+        ];
 
-        $ingredient = (object) ['id' => 1, 'stock' => 10, 'max_stock' => 100, 'below_threshold' => false];
+        $ingredients = [
+            (object) ['id' => 1, 'stock' => 120, 'max_stock' => 200, 'below_threshold' => false]
+        ];
 
-        $this->ingredientService->checkThreshold($ingredient);
+        $productIngredients = [
+            (object) ['product_id' => 1, 'ingredient_id' => 1, 'weight' => 50]
+        ];
 
-        $this->assertTrue($ingredient->below_threshold);
+        $this->ingredientRepository
+            ->shouldReceive('findManyByProductIds')
+            ->with([1])
+            ->andReturn($ingredients);
 
-        Mail::assertSent(IngredientBelowThreshold::class, function ($mail) use ($ingredient) {
-            return $mail->ingredient->id === $ingredient->id;
-        });
+        $this->ingredientProductRepository
+            ->shouldReceive('findManyByProductId')
+            ->with(1)
+            ->andReturn($productIngredients);
+
+        $this->ingredientRepository
+            ->shouldReceive('updateMany')
+            ->with(Mockery::on(function ($updatedIngredients) {
+                return $updatedIngredients[0]->stock === 20; // 120 - (2 * 50)
+            }));
+
+        $emailList = $this->ingredientService->checkAndUpdate($products);
+
+        $this->assertNotEmpty($emailList);
+        $this->assertCount(1, $emailList);
+        $this->assertEquals(1, $emailList[0]->id);
     }
 }

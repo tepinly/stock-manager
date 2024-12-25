@@ -26,6 +26,7 @@ class IngredientService implements IIngredientService
     {
         $ingredientsSum = [];
         $productIds = [];
+        $emailList = [];
 
         foreach ($products as $product) {
             array_push($productIds, $product['product_id']);
@@ -53,16 +54,25 @@ class IngredientService implements IIngredientService
         }
 
         foreach ($ingredients as $ingredient) {
-            $this->checkThreshold($ingredient);
+            $this->checkThreshold($ingredient, $emailList);
         }
 
         $this->ingredientRepository->updateMany($ingredients);
+
+        return $emailList;
     }
 
-    public function checkThreshold($ingredient)
+    public function checkThreshold($ingredient, &$emailList)
     {
         if (!$ingredient->below_threshold && $ingredient->stock < $ingredient->max_stock * $this->threshold_constant) {
             $ingredient->below_threshold = true;
+            array_push($emailList, $ingredient);
+        }
+    }
+
+    public function sendEmails($ingredients)
+    {
+        foreach ($ingredients as $ingredient) {
             $notificationEmail = env('INGREDIENT_NOTIFICATION_EMAIL');
             Mail::to($notificationEmail)->send(new IngredientBelowThreshold($ingredient));
         }
