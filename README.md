@@ -111,7 +111,7 @@ There is no frontend for the project, only the backend that runs on a `/api` pre
 - Calculates the weight of ingredients necessary to fulfill the order
   - If there aren't enough ingredients in stock, the order will fail stating that there not enough ingredients
 - Updates the ingredients in stock by subtracting the order's ingredients
-  - If one ingredient falls below the `INGREDIENT_STOCK_THRESHOLD` constant threshold, an email notification will be sent to the `INGREDIENT_NOTIFICATION_EMAIL` address assigned in the environment
+  - If one ingredient falls below the `INGREDIENT_STOCK_THRESHOLD` constant threshold (50% by default), an email notification will be sent to the `INGREDIENT_NOTIFICATION_EMAIL` address assigned in the environment
 - The operation is atomic, ensuring that
   - order creation and ingredient updates are synchronized
   - emails are sent only after the database transaction is successful
