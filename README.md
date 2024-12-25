@@ -1,5 +1,5 @@
 
-# Laravel stock management system
+# Laravel Stock Manager
 
 The idea of the project is to manage product orders by managing their ingredients and fulfilling them based on the availability of each ingredient
 
